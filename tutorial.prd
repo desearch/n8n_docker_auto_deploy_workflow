@@ -1,0 +1,109 @@
+Awesome — you're taking this to a **pro-level tutorial** now.  
+You want:
+
+- n8n **deployed with Docker + Docker Compose**.
+- **Workflow automatically activated** after deployment.
+- **PowerShell scripts** to **test** the endpoint:
+  - Once **before** workflow activation (should fail or show "inactive").
+  - Once **after** workflow activation (should succeed).
+
+Here’s the **updated PRD**:
+
+---
+
+# PRD: Frontend + n8n Workflow Tutorial Demo (Using Context7 MCPServer, Dockerized Backend)
+
+## Purpose
+Demonstrate a dynamic frontend triggering an n8n backend, deployed with Docker and managed through Context7 MCPServer at every step. Validate backend endpoints via automated PowerShell testing scripts.
+
+## Actors
+- **User**: Interacts with the frontend UI.
+- **Context7 MCPServer**: Plans, validates, and updates dev progress.
+- **n8n Backend**: Handles request processing and response generation.
+
+## User Flow
+1. User opens a simple webpage with a text input and submit button.
+2. User submits their name.
+3. Frontend POSTs the name to a webhook exposed by the n8n backend.
+4. n8n processes the request (adds timestamp, formats greeting).
+5. Frontend displays the greeting from n8n.
+
+## Frontend Requirements
+(unchanged — see previous PRD)
+
+## Backend (n8n Workflow) Requirements
+
+### Deployment
+- **n8n** will be deployed using **Docker** and **docker-compose.yml**.
+- Webhook endpoint exposed publicly or locally on port `5678`.
+
+### Docker Compose Setup
+- Services:
+  - `n8n`
+- Settings:
+  - Mount `/home/node/.n8n` for persistence.
+  - Set environment variables for basic auth and webhook settings.
+- Auto-start the server.
+- Workflow will be deployed in `n8n/init-data/` as a JSON file and **auto-activated** on startup.
+
+### n8n Workflow Definition
+- Trigger: HTTP Webhook (POST)
+- Steps:
+  1. Receive `{ "name": "string" }`.
+  2. Add timestamp.
+  3. Format message: `"Hello, [name]! You submitted this at [timestamp]."`
+- Response: Return JSON `{ "message": "..." }`.
+
+### Auto-activation
+- Use the n8n "import:workflow" feature (or init configuration) to **auto-import and activate** the workflow when container starts.
+
+---
+
+## Powershell Scripts
+
+### 1. Test Before Activation
+```powershell
+# Test n8n webhook before workflow activation
+Invoke-RestMethod -Uri "http://localhost:5678/webhook/test-greeting" -Method POST -Body (@{ name = "TestUser" } | ConvertTo-Json) -ContentType "application/json"
+```
+- **Expected:** 404 Not Found or Error Response (workflow not active yet).
+
+---
+
+### 2. Test After Activation
+```powershell
+# Test n8n webhook after workflow activation
+Invoke-RestMethod -Uri "http://localhost:5678/webhook/test-greeting" -Method POST -Body (@{ name = "TestUser" } | ConvertTo-Json) -ContentType "application/json"
+```
+- **Expected:** Successful response:
+```json
+{
+  "message": "Hello, TestUser! You submitted this at [timestamp]."
+}
+```
+
+---
+
+## Context7 Iteration Plan
+At each of these steps, **consult Context7**:
+1. Plan initial `docker-compose.yml` setup.
+2. Confirm best practices for webhook exposure.
+3. Validate Powershell test commands.
+4. Suggest improvements (like adding retries, error handling, etc.).
+
+---
+
+## Tech Stack
+- **Frontend**: HTML + JavaScript
+- **Backend**: n8n (Docker, docker-compose)
+- **Planning Assistant**: Context7 MCPServer
+- **Testing**: Powershell
+
+## Success Criteria
+- n8n is deployed via Docker and reachable at port 5678.
+- Webhook is correctly registered and automatically active.
+- Before activation: Powershell call fails.
+- After activation: Powershell call succeeds and frontend shows greeting.
+
+---
+

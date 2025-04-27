@@ -1,0 +1,47 @@
+{
+  "name": "Greeting Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "test-greeting",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ],
+      "webhookId": "test-greeting-hook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get name from input\nconst name = $json.body.name || 'World';\n\n// Get current timestamp\nconst timestamp = new Date().toISOString();\n\n// Format the message\nconst message = `Hello, ${name}! You submitted this at ${timestamp}.`;\n\n// Prepare the output\n$items[0].json = { message: message };\n\nreturn $items;"
+      },
+      "name": "Format Greeting",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format Greeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "id": "greetingWorkflow1"
+} 
